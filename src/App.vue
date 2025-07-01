@@ -26,23 +26,33 @@ function move(direction: Direction) : None {
         ]);
         const moveFunction = vectors.get(direction);
         moveFunction()
-        // Temporary Disable
-        // spawnNewTiles();
+        spawnNewTiles();
 }
 
 function moveUp() {
-        for (let i = board.length-1; i > 0; i--) {
+        for (let i = 0; i < board.length; i++) {
                 for (let j = 0; j < board[i].length; j++) {
-                        if (board[i][j] === 0) continue;
-                        if (board[i-1][j] === 0) {
-                                board[i-1][j] = board[i][j];
-                                board[i][j] = 0;
+                        const otherTilesInRow = board.slice(i+1, board.length).map((a) => {return a[j]})
+                        if (board[i][j] === 0 && otherTilesInRow.some(e => e > 0)) {
+                        const indexToMove = otherTilesInRow.findIndex(e => e > 0) + i + 1;
+                                board[i][j] = board[indexToMove][j];
+                                board[indexToMove][j] = 0;
                                 continue;
                         }
-                        if (board[i][j] === board[i-1][j]) {
-                                board[i-1][j] += board[i][j];
-                                board[i][j] = 0;
-                                score.value += board[i-1][j];
+                        if (i+1 >= board.length) continue;
+                        if (board[i][j] === board[i+1][j]) {
+                                board[i][j] += board[i+1][j];
+                                board[i+1][j] = 0;
+                                score.value += board[i][j];
+                                // Move any other tile
+                                for (let k = i; k < board.length - 1; k++) {
+                                        if (board[k+1][j] === 0) continue;
+                                        if (board[k][j] === 0) {
+                                                board[k][j] = board[k+1][j];
+                                                board[k+1][j] = 0;
+                                                continue;
+                                        }
+                                }
                                 continue;
                         }
                 }
@@ -50,14 +60,16 @@ function moveUp() {
 }
 
 function moveDown() {
-        for (let i = board.length-1; i > 0; i--) {
+        for (let i = board.length - 1; i >= 0; i--) {
                 for (let j = 0; j < board[i].length; j++) {
-                        if (board[i][j] === 0 && board.slice(0, i).map((a) => {return a[j]}).some(e => e > 0)) {
-                        const indexToMove = board.slice(0, i).map((a) => {return a[j]}).findIndex(e => e > 0);
+                        const otherTilesInRow = board.slice(0, i).map((a) => {return a[j]})
+                        if (board[i][j] === 0 && otherTilesInRow.some(e => e > 0)) {
+                        const indexToMove = otherTilesInRow.findIndex(e => e > 0);
                                 board[i][j] = board[indexToMove][j];
                                 board[indexToMove][j] = 0;
                                 continue;
                         }
+                        if (i-1 < 0) continue;
                         if (board[i][j] === board[i-1][j]) {
                                 board[i-1][j] += board[i][j];
                                 board[i][j] = 0;
@@ -72,7 +84,6 @@ function moveDown() {
                                         }
                                 }
                                 continue;
-                                continue;
                         }
                 }
         }
@@ -80,9 +91,10 @@ function moveDown() {
 
 function moveLeft() {
         for (let i = 0; i < board.length; i++) {
-                for (let j = 0; j < board[i].length; j++) {
-                        if (board[i][j] === 0 && board[i].slice(j, board[i].length).some(e => e > 0)) {
-                        const indexToMove = board[i].slice(j, board[i].length).findIndex(e => e > 0);
+                for (let j = 0; j < board[i].length - 1; j++) {
+                        const otherTilesInRow = board[i].slice(j+1, board[i].length)
+                        if (board[i][j] === 0 && otherTilesInRow.some(e => e > 0)) {
+                        const indexToMove = otherTilesInRow.findIndex(e => e > 0) + j + 1;
                                 board[i][j] = board[i][indexToMove];
                                 board[i][indexToMove] = 0;
                                 continue;
@@ -108,9 +120,10 @@ function moveLeft() {
 
 function moveRight() {
         for (let i = 0; i < board.length; i++) {
-                for (let j = board[i].length; j > 0; j--) {
-                        if (board[i][j] === 0 && board[i].slice(0, j).some(e => e > 0)) {
-                        const indexToMove = board[i].slice(0, j).findIndex(e => e > 0);
+                for (let j = board[i].length - 1; j > 0; j--) {
+                        const otherTilesInRow = board[i].slice(0, j)
+                        if (board[i][j] === 0 && otherTilesInRow.some(e => e > 0)) {
+                        const indexToMove = otherTilesInRow.findIndex(e => e > 0);
                                 board[i][j] = board[i][indexToMove];
                                 board[i][indexToMove] = 0;
                                 continue;
