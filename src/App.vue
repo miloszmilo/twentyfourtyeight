@@ -2,9 +2,12 @@
 import HelloWorld from './components/HelloWorld.vue'
 import Board from './components/organisms/Board.vue'
 import {reactive, ref} from 'vue'
-const board = reactive([[2, 2, 2, 2], [0, 2, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]]);
+const board = reactive([[1024, 1024, 2, 2], [0, 4, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]]);
 const isGameOver = ref(false);
+const isWon = ref(false);
 const score = ref(0);
+const WINNING_TILE = 2048;
+const MAX_TILE = 131072;
 
 const vectors = new Map<Direction, Array<Number>>([
         ["UP", [0, -1]],
@@ -42,20 +45,19 @@ function moveUp() {
                                 continue;
                         }
                         if (i+1 >= board.length) continue;
-                        if (board[i][j] === board[i+1][j]) {
-                                board[i][j] += board[i+1][j];
-                                board[i+1][j] = 0;
-                                score.value += board[i][j];
-                                // Move any other tile
-                                for (let k = i; k < board.length - 1; k++) {
-                                        if (board[k+1][j] === 0) continue;
-                                        if (board[k][j] === 0) {
-                                                board[k][j] = board[k+1][j];
-                                                board[k+1][j] = 0;
-                                                continue;
-                                        }
+                        if (board[i][j] !== board[i+1][j]) continue;
+                        [board[i][j], board[i+1][j]] = mergeTiles(board[i][j], board[i+1][j]);
+                        // board[i][j] += board[i+1][j];
+                        // board[i+1][j] = 0;
+                        // score.value += board[i][j];
+                        // Move any other tile
+                        for (let k = i; k < board.length - 1; k++) {
+                                if (board[k+1][j] === 0) continue;
+                                if (board[k][j] === 0) {
+                                        board[k][j] = board[k+1][j];
+                                        board[k+1][j] = 0;
+                                        continue;
                                 }
-                                continue;
                         }
                 }
         }
@@ -76,20 +78,19 @@ function moveDown() {
                                 continue;
                         }
                         if (i-1 < 0) continue;
-                        if (board[i][j] === board[i-1][j]) {
-                                board[i-1][j] += board[i][j];
-                                board[i][j] = 0;
-                                score.value += board[i-1][j];
-                                // Move any other tile
-                                for (let k = i; k > 0; k--) {
-                                        if (board[k-1][j] === 0) continue;
-                                        if (board[k][j] === 0) {
-                                                board[k][j] = board[k-1][j];
-                                                board[k-1][j] = 0;
-                                                continue;
-                                        }
+                        if (board[i][j] !== board[i-1][j]) continue;
+                        [board[i-1][j], board[i][j]] = mergeTiles(board[i-1][j], board[i][j]);
+                        // board[i-1][j] += board[i][j];
+                        // board[i][j] = 0;
+                        // score.value += board[i-1][j];
+                        // Move any other tile
+                        for (let k = i; k > 0; k--) {
+                                if (board[k-1][j] === 0) continue;
+                                if (board[k][j] === 0) {
+                                        board[k][j] = board[k-1][j];
+                                        board[k-1][j] = 0;
+                                        continue;
                                 }
-                                continue;
                         }
                 }
         }
@@ -107,20 +108,19 @@ function moveLeft() {
                                 board[i][indexToMove] = 0;
                                 continue;
                         }
-                        if (board[i][j] === board[i][j+1]) {
-                                board[i][j] += board[i][j+1];
-                                board[i][j+1] = 0;
-                                score.value += board[i][j];
-                                // Move any other tile
-                                for (let k = j; k < board[i].length - 1; k++) {
-                                        if (board[i][k+1] === 0) continue;
-                                        if (board[i][k] === 0) {
-                                                board[i][k] = board[i][k+1];
-                                                board[i][k+1] = 0;
-                                                continue;
-                                        }
+                        if (board[i][j] !== board[i][j+1]) continue;
+                        [board[i][j], board[i][j+1]] = mergeTiles(board[i][j], board[i][j+1]);
+                        // board[i][j] += board[i][j+1];
+                        // board[i][j+1] = 0;
+                        // score.value += board[i][j];
+                        // Move any other tile
+                        for (let k = j; k < board[i].length - 1; k++) {
+                                if (board[i][k+1] === 0) continue;
+                                if (board[i][k] === 0) {
+                                        board[i][k] = board[i][k+1];
+                                        board[i][k+1] = 0;
+                                        continue;
                                 }
-                                continue;
                         }
                 }
         }
@@ -140,9 +140,10 @@ function moveRight() {
                                 continue;
                         }
                         if (board[i][j] !== board[i][j-1]) continue;
-                        board[i][j] += board[i][j-1];
-                        board[i][j-1] = 0;
-                        score.value += board[i][j];
+                        [board[i][j], board[i][j-1]] = mergeTiles(board[i][j], board[i][j-1]);
+                        // board[i][j] += board[i][j-1];
+                        // board[i][j-1] = 0;
+                        // score.value += board[i][j];
                         // Move any other tile
                         for (let k = j; k > 0; k--) {
                                 if (board[i][k-1] === 0) continue;
@@ -173,6 +174,17 @@ function findLastIndex<T>(array: Array<T>, predicate: (value: T, index: number, 
             return l;
     }
     return -1;
+}
+
+function mergeTiles(firstTile: number, secondTile: number): [number, number] {
+        if ((firstTile + secondTile) == WINNING_TILE && !isWon.value) isWon.value = true;
+        if ((firstTile + secondTile) > MAX_TILE) {
+                return;
+        }
+        firstTile += secondTile;
+        secondTile = 0;
+        score.value += firstTile;
+        return [firstTile, secondTile];
 }
 
 function spawnNewTiles() {
@@ -224,15 +236,16 @@ function startGame() {
 
 <template>
         <main>
-                <div>
+                <div class="flex flex-col">
                         <span>HIGHSCORE {{score}}</span>
                         <span>GAME OVER {{isGameOver ? 'LOST' : 'PLAYING'}}</span>
+                        <span>WINNING {{isWon ? 'WON' : 'NOT YET'}}</span>
                         <button @click="startGame">Start</button>
                         <Board :board="board"/>
-                        <button @click="move('UP')">UP</button>
-                        <button @click="move('DOWN')">DOWN</button>
-                        <button @click="move('LEFT')">LEFT</button>
-                        <button @click="move('RIGHT')">RIGHT</button>
+                        <button @click="move('UP')" class="rounded-md bg-blue-500 p-2 w-fit">UP</button>
+                        <button @click="move('DOWN')" class="rounded-md bg-blue-500 p-2 w-fit">DOWN</button>
+                        <button @click="move('LEFT')" class="rounded-md bg-blue-500 p-2 w-fit">LEFT</button>
+                        <button @click="move('RIGHT')" class="rounded-md bg-blue-500 p-2 w-fit">RIGHT</button>
                 </div>
         </main>
 </template>
