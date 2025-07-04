@@ -29,13 +29,12 @@ function move(direction: Direction): None {
         ]);
         const moveFunction = vectors.get(direction);
         moveFunction()
-        // spawnNewTiles();
+        spawnNewTiles();
 }
 
 function moveUp() {
         for (let i = board[0].length - 1; i >= 0; i--) {
                 const col = board
-                        .slice(0, board.length)
                         .map(a => a[i])
                         .filter((e) => e !== 0);
                 const mergedCol = [];
@@ -62,25 +61,23 @@ function moveUp() {
 function moveDown() {
         for (let i = 0; i < board[0].length; i++) {
                 const col = board
-                        .slice(0, board.length)
                         .map(a => a[i])
                         .filter((e) => e !== 0);
                 const mergedCol = [];
-                for (let j = col.length - 1; j >= 0; j--) {
-                        if (j === 0) {
-                                mergedCol.unshift(col[j]);
+                for (let j = 0; j < col.length; j++) {
+                        if (j === col.length - 1) {
+                                mergedCol.push(col[j]);
                                 continue;
                         }
-                        if (col[j] === col[j-1]) {
-                                mergedCol.unshift(col[j]+col[j-1]);
-                                j--;
+                        if (col[j] === col[j+1]) {
+                                mergedCol.push(col[j]+col[j+1]);
+                                j++;
                                 continue;
                         }
-                        mergedCol.unshift(col[j]);
+                        mergedCol.push(col[j]);
                 }
                 const zeros = new Array(board[i].length - mergedCol.length).fill(0);
-                const mergedColumn = mergedCol.concat([...zeros]).reverse();
-                console.log(mergedColumn);
+                const mergedColumn = zeros.concat([...mergedCol]);
                 for (let k = board.length - 1; k >= 0; k--) {
                        board[k][i] = mergedColumn[k];
                 }
