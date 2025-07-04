@@ -6,6 +6,7 @@ const board = reactive([[2, 2, 2, 0], [2, 2, 2, 0], [2, 2, 2, 0], [0, 0, 0, 0]])
 const isGameOver = ref(false);
 const isWon = ref(false);
 const score = ref(0);
+const lifetimeHighscore = ref(0);
 const WINNING_TILE = 2048;
 const MAX_TILE = 131072;
 
@@ -45,6 +46,8 @@ function moveUp() {
                         }
                         if (col[j] === col[j+1]) {
                                 mergedCol.push(col[j]+col[j+1]);
+                                score.value += col[j]+col[j+1];
+                                // saveHighscore();
                                 j++;
                                 continue;
                         }
@@ -71,6 +74,8 @@ function moveDown() {
                         }
                         if (col[j] === col[j+1]) {
                                 mergedCol.push(col[j]+col[j+1]);
+                                score.value += col[j]+col[j+1];
+                                // saveHighscore();
                                 j++;
                                 continue;
                         }
@@ -95,6 +100,8 @@ function moveLeft() {
                         }
                         if (row[j] === row[j-1]) {
                                 mergedRow.unshift(row[j]+row[j-1]);
+                                score.value += row[j]+row[j-1];
+                                // saveHighscore();
                                 j--;
                                 continue;
                         }
@@ -116,6 +123,8 @@ function moveRight() {
                         }
                         if (row[j] === row[j+1]) {
                                 mergedRow.push(row[j]+row[j+1]);
+                                score.value += row[j]+row[j+1];
+                                // saveHighscore();
                                 j++;
                                 continue;
                         }
@@ -124,17 +133,6 @@ function moveRight() {
                 const zeros = new Array(board[i].length - mergedRow.length).fill(0);
                 board[i] = zeros.concat([...mergedRow]);
         }
-}
-
-function mergeTiles(firstTile: number, secondTile: number): [number, number] {
-        if ((firstTile + secondTile) == WINNING_TILE && !isWon.value) isWon.value = true;
-        if ((firstTile + secondTile) > MAX_TILE) {
-                return;
-        }
-        firstTile += secondTile;
-        secondTile = 0;
-        score.value += firstTile;
-        return [firstTile, secondTile];
 }
 
 function spawnNewTiles() {
@@ -178,7 +176,14 @@ function startGame() {
                                 tilesLeft--;
                         }
                 }
-        };
+        }
+}
+
+function saveHighscore() {
+        if (localstorage.highscore < score.value) {
+                localstorage.highscore = score.value;
+                lifetimeHighscore.value = score.value;
+        }
 }
 
 
@@ -188,6 +193,7 @@ function startGame() {
         <main>
                 <div class="flex flex-col">
                         <span>HIGHSCORE {{ score }}</span>
+                        <span>LIFETIME HIGHSCORE {{ lifetimeHighscore }}</span>
                         <span>GAME OVER {{ isGameOver ? 'LOST' : 'PLAYING' }}</span>
                         <span>WINNING {{ isWon ? 'WON' : 'NOT YET' }}</span>
                         <button @click="startGame">Start</button>
