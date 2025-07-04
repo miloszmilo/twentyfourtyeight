@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import HelloWorld from './components/HelloWorld.vue'
 import Board from './components/organisms/Board.vue'
-import {reactive, ref} from 'vue'
-const board = reactive([[1024, 1024, 2, 2], [0, 4, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]]);
+import { reactive, ref } from 'vue'
+const board = reactive([[2, 2, 2, 0], [2, 2, 2, 0], [2, 2, 2, 0], [0, 0, 0, 0]]);
 const isGameOver = ref(false);
 const isWon = ref(false);
 const score = ref(0);
@@ -20,7 +20,7 @@ type Direction = "UP" | "DOWN" | "LEFT" | "RIGHT";
 
 const sleep = (delay) => new Promise((resolve) => setTimeout(resolve, delay))
 
-function move(direction: Direction) : None {
+function move(direction: Direction): None {
         const vectors = new Map<Direction, Array<Number>>([
                 ["UP", moveUp],
                 ["DOWN", moveDown],
@@ -33,147 +33,100 @@ function move(direction: Direction) : None {
 }
 
 function moveUp() {
-        for (let i = 0; i < board.length; i++) {
-                for (let j = 0; j < board[i].length; j++) {
-                        const otherTilesInCol = board
-                                .slice(i+1, board.length).map((a) => {return a[j]})
-                        if (board[i][j] === 0 && otherTilesInCol.some(e => e > 0)) {
-                                const indexToMove = otherTilesInCol
-                                        .findIndex(e => e > 0) + i + 1;
-                                board[i][j] = board[indexToMove][j];
-                                board[indexToMove][j] = 0;
+        for (let i = board[0].length - 1; i >= 0; i--) {
+                const col = board
+                        .slice(0, board.length)
+                        .map(a => a[i])
+                        .filter((e) => e !== 0);
+                const mergedCol = [];
+                for (let j = 0; j < col.length; j++) {
+                        if (j === col.length-1) {
+                                mergedCol.push(col[j]);
                                 continue;
                         }
-                        if (i+1 >= board.length) continue;
-                        if (board[i][j] !== board[i+1][j]) continue;
-                        [board[i][j], board[i+1][j]] = mergeTiles(board[i][j], board[i+1][j]);
-                        // board[i][j] += board[i+1][j];
-                        // board[i+1][j] = 0;
-                        // score.value += board[i][j];
-                        // Move any other tile
-                        for (let k = i; k < board.length - 1; k++) {
-                                if (board[k+1][j] === 0) continue;
-                                if (board[k][j] === 0) {
-                                        board[k][j] = board[k+1][j];
-                                        board[k+1][j] = 0;
-                                        continue;
-                                }
+                        if (col[j] === col[j+1]) {
+                                mergedCol.push(col[j]+col[j+1]);
+                                j++;
+                                continue;
                         }
+                        mergedCol.push(col[j]);
+                }
+                const zeros = new Array(board[i].length - mergedCol.length).fill(0);
+                const mergedColumn = mergedCol.concat([...zeros]);
+                for (let k = 0; k < board.length; k++) {
+                       board[k][i] = mergedColumn[k];
                 }
         }
 }
 
 function moveDown() {
-        for (let i = board.length - 1; i >= 0; i--) {
-                for (let j = 0; j < board[i].length; j++) {
-                        const otherTilesInCol = board
-                                .slice(0, i).map((a) => {return a[j]})
-                        if (board[i][j] === 0 && otherTilesInCol.some(e => e > 0)) {
-                                const indexToMove = findLastIndex(
-                                        otherTilesInCol,
-                                        e => e > 0
-                                );
-                                board[i][j] = board[indexToMove][j];
-                                board[indexToMove][j] = 0;
+        for (let i = 0; i < board[0].length; i++) {
+                const col = board
+                        .slice(0, board.length)
+                        .map(a => a[i])
+                        .filter((e) => e !== 0);
+                const mergedCol = [];
+                for (let j = col.length - 1; j >= 0; j--) {
+                        if (j === 0) {
+                                mergedCol.unshift(col[j]);
                                 continue;
                         }
-                        if (i-1 < 0) continue;
-                        if (board[i][j] !== board[i-1][j]) continue;
-                        [board[i-1][j], board[i][j]] = mergeTiles(board[i-1][j], board[i][j]);
-                        // board[i-1][j] += board[i][j];
-                        // board[i][j] = 0;
-                        // score.value += board[i-1][j];
-                        // Move any other tile
-                        for (let k = i; k > 0; k--) {
-                                if (board[k-1][j] === 0) continue;
-                                if (board[k][j] === 0) {
-                                        board[k][j] = board[k-1][j];
-                                        board[k-1][j] = 0;
-                                        continue;
-                                }
+                        if (col[j] === col[j-1]) {
+                                mergedCol.unshift(col[j]+col[j-1]);
+                                j--;
+                                continue;
                         }
+                        mergedCol.unshift(col[j]);
+                }
+                const zeros = new Array(board[i].length - mergedCol.length).fill(0);
+                const mergedColumn = mergedCol.concat([...zeros]).reverse();
+                console.log(mergedColumn);
+                for (let k = board.length - 1; k >= 0; k--) {
+                       board[k][i] = mergedColumn[k];
                 }
         }
 }
 
 function moveLeft() {
         for (let i = 0; i < board.length; i++) {
-                for (let j = 0; j < board[i].length - 1; j++) {
-                        const otherTilesInRow = board[i]
-                                .slice(j+1, board[i].length)
-                        if (board[i][j] === 0 && otherTilesInRow.some(e => e > 0)) {
-                                const indexToMove = otherTilesInRow
-                                        .findIndex(e => e > 0) + j + 1;
-                                board[i][j] = board[i][indexToMove];
-                                board[i][indexToMove] = 0;
+                const row = board[i].filter((e) => e !== 0);
+                const mergedRow = [];
+                for (let j = row.length-1; j >= 0; j--) {
+                        if (j === 0) {
+                                mergedRow.unshift(row[j]);
                                 continue;
                         }
-                        if (board[i][j] !== board[i][j+1]) continue;
-                        [board[i][j], board[i][j+1]] = mergeTiles(board[i][j], board[i][j+1]);
-                        // board[i][j] += board[i][j+1];
-                        // board[i][j+1] = 0;
-                        // score.value += board[i][j];
-                        // Move any other tile
-                        for (let k = j; k < board[i].length - 1; k++) {
-                                if (board[i][k+1] === 0) continue;
-                                if (board[i][k] === 0) {
-                                        board[i][k] = board[i][k+1];
-                                        board[i][k+1] = 0;
-                                        continue;
-                                }
+                        if (row[j] === row[j-1]) {
+                                mergedRow.unshift(row[j]+row[j-1]);
+                                j--;
+                                continue;
                         }
+                        mergedRow.unshift(row[j]);
                 }
+                const zeros = new Array(board[i].length - mergedRow.length).fill(0);
+                board[i] = mergedRow.concat([...zeros]);
         }
 }
 
 function moveRight() {
         for (let i = 0; i < board.length; i++) {
-                for (let j = board[i].length - 1; j > 0; j--) {
-                        const otherTilesInRow = board[i].slice(0, j)
-                        if (board[i][j] === 0 && otherTilesInRow.some(e => e > 0)) {
-                                const indexToMove = findLastIndex(
-                                        otherTilesInRow,
-                                        e => e > 0
-                                );
-                                board[i][j] = board[i][indexToMove];
-                                board[i][indexToMove] = 0;
+                const row = board[i].filter((e) => e !== 0);
+                const mergedRow = [];
+                for (let j = 0; j < row.length; j++) {
+                        if (j === row.length-1) {
+                                mergedRow.push(row[j]);
                                 continue;
                         }
-                        if (board[i][j] !== board[i][j-1]) continue;
-                        [board[i][j], board[i][j-1]] = mergeTiles(board[i][j], board[i][j-1]);
-                        // board[i][j] += board[i][j-1];
-                        // board[i][j-1] = 0;
-                        // score.value += board[i][j];
-                        // Move any other tile
-                        for (let k = j; k > 0; k--) {
-                                if (board[i][k-1] === 0) continue;
-                                if (board[i][k] === 0) {
-                                        board[i][k] = board[i][k-1];
-                                        board[i][k-1] = 0;
-                                        continue;
-                                }
+                        if (row[j] === row[j+1]) {
+                                mergedRow.push(row[j]+row[j+1]);
+                                j++;
+                                continue;
                         }
-                        continue;
+                        mergedRow.push(row[j]);
                 }
+                const zeros = new Array(board[i].length - mergedRow.length).fill(0);
+                board[i] = zeros.concat([...mergedRow]);
         }
-}
-
-/**
-* https://stackoverflow.com/questions/40929260/find-last-index-of-element-inside-array-by-certain-condition/53187807#53187807
-* Returns the index of the last element in the array where predicate is true, and -1
-* otherwise.
-* @param array The source array to search in
-* @param predicate find calls predicate once for each element of the array, in descending
-* order, until it finds one where predicate returns true. If such an element is found,
-* findLastIndex immediately returns that element index. Otherwise, findLastIndex returns -1.
-*/
-function findLastIndex<T>(array: Array<T>, predicate: (value: T, index: number, obj: T[]) => boolean): number {
-    let l = array.length;
-    while (l--) {
-        if (predicate(array[l], l, array))
-            return l;
-    }
-    return -1;
 }
 
 function mergeTiles(firstTile: number, secondTile: number): [number, number] {
@@ -204,8 +157,8 @@ function spawnNewTiles() {
                                 const shouldChangeTile = Math.round(Math.random());
                                 if (shouldChangeTile === 1)
                                         board[i][j] = tile;
-                                        isTileInserted = true;
-                                        return;
+                                isTileInserted = true;
+                                return;
                         }
                 }
         }
@@ -237,11 +190,11 @@ function startGame() {
 <template>
         <main>
                 <div class="flex flex-col">
-                        <span>HIGHSCORE {{score}}</span>
-                        <span>GAME OVER {{isGameOver ? 'LOST' : 'PLAYING'}}</span>
-                        <span>WINNING {{isWon ? 'WON' : 'NOT YET'}}</span>
+                        <span>HIGHSCORE {{ score }}</span>
+                        <span>GAME OVER {{ isGameOver ? 'LOST' : 'PLAYING' }}</span>
+                        <span>WINNING {{ isWon ? 'WON' : 'NOT YET' }}</span>
                         <button @click="startGame">Start</button>
-                        <Board :board="board"/>
+                        <Board :board="board" />
                         <button @click="move('UP')" class="rounded-md bg-blue-500 p-2 w-fit">UP</button>
                         <button @click="move('DOWN')" class="rounded-md bg-blue-500 p-2 w-fit">DOWN</button>
                         <button @click="move('LEFT')" class="rounded-md bg-blue-500 p-2 w-fit">LEFT</button>
