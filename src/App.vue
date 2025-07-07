@@ -6,7 +6,7 @@ const board = reactive([[2, 2, 2, 0], [2, 2, 2, 0], [2, 2, 2, 0], [0, 0, 0, 0]])
 const isGameOver = ref(false);
 const isWon = ref(false);
 const score = ref(0);
-const lifetimeHighscore = ref(0);
+const lifetimeHighscore = ref(localStorage.getItem("highscore") ?? 0);
 const WINNING_TILE = 2048;
 const MAX_TILE = 131072;
 
@@ -47,7 +47,7 @@ function moveUp() {
                         if (col[j] === col[j+1]) {
                                 mergedCol.push(col[j]+col[j+1]);
                                 score.value += col[j]+col[j+1];
-                                // saveHighscore();
+                                saveHighscore();
                                 j++;
                                 continue;
                         }
@@ -75,7 +75,7 @@ function moveDown() {
                         if (col[j] === col[j+1]) {
                                 mergedCol.push(col[j]+col[j+1]);
                                 score.value += col[j]+col[j+1];
-                                // saveHighscore();
+                                saveHighscore();
                                 j++;
                                 continue;
                         }
@@ -101,7 +101,7 @@ function moveLeft() {
                         if (row[j] === row[j-1]) {
                                 mergedRow.unshift(row[j]+row[j-1]);
                                 score.value += row[j]+row[j-1];
-                                // saveHighscore();
+                                saveHighscore();
                                 j--;
                                 continue;
                         }
@@ -124,7 +124,7 @@ function moveRight() {
                         if (row[j] === row[j+1]) {
                                 mergedRow.push(row[j]+row[j+1]);
                                 score.value += row[j]+row[j+1];
-                                // saveHighscore();
+                                saveHighscore();
                                 j++;
                                 continue;
                         }
@@ -180,10 +180,11 @@ function startGame() {
 }
 
 function saveHighscore() {
-        if (localstorage.highscore < score.value) {
-                localstorage.highscore = score.value;
-                lifetimeHighscore.value = score.value;
+        if (localStorage.getItem("highscore") >= score.value) {
+                return;
         }
+        localStorage.setItem("highscore", score.value);
+        lifetimeHighscore.value = score.value;
 }
 
 
