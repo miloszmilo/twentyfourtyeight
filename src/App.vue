@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import HelloWorld from './components/HelloWorld.vue'
+import MovementButton from './components/atoms/MovementButton.vue'
 import Board from './components/organisms/Board.vue'
 import { reactive, ref } from 'vue'
-const board = reactive([[2, 2, 2, 0], [2, 2, 2, 0], [2, 2, 2, 0], [0, 0, 0, 0]]);
+const board = reactive([[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]]);
 const isGameOver = ref(false);
 const isWon = ref(false);
 const score = ref(0);
@@ -192,17 +192,21 @@ function saveHighscore() {
 
 <template>
         <main>
-                <div class="flex flex-col">
-                        <span>HIGHSCORE {{ score }}</span>
-                        <span>LIFETIME HIGHSCORE {{ lifetimeHighscore }}</span>
-                        <span>GAME OVER {{ isGameOver ? 'LOST' : 'PLAYING' }}</span>
-                        <span>WINNING {{ isWon ? 'WON' : 'NOT YET' }}</span>
-                        <button @click="startGame">Start</button>
+                <div class="flex flex-col items-center w-full">
+                        <div class="flex flex-row gap-4">
+                                <span>HIGHSCORE {{ score }}</span>
+                                <span>LIFETIME HIGHSCORE {{ lifetimeHighscore }}</span>
+                                <span>{{ isGameOver ? 'GAME OVER' : 'STILL PLAYING' }}</span>
+                                <span>{{ isWon ? 'WON' : '' }}</span>
+                        </div>
+                        <button @click="startGame" class="cursor-pointer rounded-md hover:bg-green-400 bg-green-500 text-white py-2 px-4 text-xl">Start</button>
                         <Board :board="board" />
-                        <button @click="move('UP')" class="rounded-md bg-blue-500 p-2 w-fit">UP</button>
-                        <button @click="move('DOWN')" class="rounded-md bg-blue-500 p-2 w-fit">DOWN</button>
-                        <button @click="move('LEFT')" class="rounded-md bg-blue-500 p-2 w-fit">LEFT</button>
-                        <button @click="move('RIGHT')" class="rounded-md bg-blue-500 p-2 w-fit">RIGHT</button>
+                        <div class="flex flex-row gap-2">
+                                <MovementButton :onClick="() => move('UP')" text="UP"/>
+                                <MovementButton :onClick="() => move('DOWN')" text="DOWN"/>
+                                <MovementButton :onClick="() => move('LEFT')" text="LEFT"/>
+                                <MovementButton :onClick="() => move('RIGHT')" text="RIGHT"/>
+                        </div>
                 </div>
         </main>
 </template>
